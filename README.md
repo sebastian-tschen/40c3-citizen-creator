@@ -31,6 +31,30 @@ Everything runs in the browser. Nothing is uploaded anywhere and nothing is stor
 all parts and fonts embedded. Download it and open it in a browser; it needs no
 server and no network.
 
+## Three pages
+
+The tabs at the top switch between the citizen creator, the pattern creator and
+[`assets.html`](assets.html), which offers the styleguide's artwork for download:
+the logo in every palette color, and icons, boxes, citizens, patterns and creator
+parts in colors of your choice, as SVG, PNG or all at once as a zip. Each page is
+its own standalone file; the tabs work when the files sit next to each other.
+
+## Pattern creator (draft)
+
+[`pattern_creator.html`](pattern_creator.html) fills a space of any size with the
+line-art objects of the styleguide's pattern page. The four pattern strips are cut
+into single objects (the table is in `build.py`), packed at random, and every
+object can then be moved, swapped, mirrored, rotated, recoloured or removed.
+"Seamless" makes a pattern that repeats as a tile. Exports: SVG, PNG and a JSON
+file; the JSON and the SVG can be loaded again.
+
+Each object has an area (a mask of 4-unit cells, not necessarily a rectangle) and
+connection points (free wire ends with a direction). The fill keeps other objects
+out of the area and hangs objects onto open wire ends; Shift while dragging snaps
+connection points by hand. Both are edited in the page ("edit shapes & connection
+points"); edits stay in the browser until you download the object data, save it as
+`src/pattern_tiles.json` and rebuild.
+
 ## Citizen file format
 
 ```json
@@ -56,8 +80,9 @@ file names in `Citizen_Creator_Assets/` and `Assets/Icons_Deco/` without `.svg`.
 
 ## Building
 
-`citizen_creator.html` is generated. Edit `src/citizen_creator.html` (the template,
-including the table that places each part) or the assets, then run:
+`citizen_creator.html`, `pattern_creator.html` and `assets.html` are generated. Edit the templates
+in `src/` (the citizen template includes the table that places each part) or the
+assets, then run:
 
 ```
 python3 build.py

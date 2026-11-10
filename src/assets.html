@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASSETS · 40C3</title>
+<link rel="icon" href="__IMG_40C3_Logo_0__">
+<style>
+:root { --bg: #001300; --green: #75b44b; --fg: #ebedf0; --dim: rgba(117, 180, 75, .45); }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); }
+body { font: 14px/1.4 "Hack", ui-monospace, Menlo, Consolas, monospace; min-height: 100vh; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px dashed var(--fg); outline-offset: 2px; }
+a { color: var(--green); }
+
+.tabs { display: flex; gap: 6px; padding: 10px 24px 0; border-bottom: 2px solid var(--green); }
+.tabs a { font: 400 22px/1 "Jersey 10", "Hack", monospace; letter-spacing: .04em; color: var(--green); text-decoration: none; border: 2px solid var(--green); border-bottom: 0; padding: 6px 14px 4px; }
+.tabs a:hover { color: var(--fg); }
+.tabs a.on { background: var(--green); color: var(--bg); }
+
+header { padding: 14px 24px 6px; }
+h1 { font: 400 clamp(38px, 5vw, 64px)/.9 "Jersey 10", "Hack", monospace; color: var(--green); margin: 0; letter-spacing: .02em; }
+h2 { font: 400 30px/1 "Jersey 10", "Hack", monospace; color: var(--green); margin: 30px 0 4px; letter-spacing: .03em; }
+h2 small { font: 12px "Hack", monospace; color: var(--dim); margin-left: 10px; letter-spacing: 0; }
+p.note { color: var(--dim); font-size: 12px; margin: 0 0 10px; max-width: 900px; }
+
+#bar { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 2px solid var(--dim); padding: 10px 24px; display: flex; gap: 8px 26px; flex-wrap: wrap; align-items: center; }
+.chips { display: flex; gap: 4px; align-items: center; }
+.chips small { color: var(--green); margin-right: 4px; }
+.chip { width: 20px; height: 20px; border: 2px solid var(--fg); background: var(--c); padding: 0; }
+.chip.on { outline: 2px solid var(--fg); outline-offset: 2px; }
+.chip.none { background: repeating-linear-gradient(45deg, #333 0 4px, #111 4px 8px); }
+input[type=color] { width: 26px; height: 22px; padding: 0; border: 2px solid var(--fg); background: none; }
+input[type=checkbox] { accent-color: var(--green); }
+select { background: var(--bg); border: 2px solid var(--green); padding: 3px 6px; border-radius: 0; }
+label.c { display: flex; gap: 6px; align-items: center; }
+.btn { background: var(--bg); border: 2px solid var(--green); color: var(--fg); padding: 5px 10px; font-size: 13px; white-space: nowrap; }
+.btn:hover { background: var(--green); color: var(--bg); }
+.btn.tiny { padding: 1px 6px; font-size: 12px; }
+
+main { padding: 0 24px 30px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.card { border: 2px solid var(--dim); display: flex; flex-direction: column; min-width: 0; }
+.card:hover { border-color: var(--green); }
+.card .pic { aspect-ratio: 1; padding: 14px; display: flex; background: repeating-conic-gradient(#0a1c0a 0 25%, #001300 0 50%) 0 0/16px 16px; }
+.card .pic svg { width: 100%; height: 100%; }
+.card .name { padding: 5px 8px 0; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card .acts { display: flex; gap: 4px; padding: 5px 8px 8px; }
+#toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--green); color: var(--bg); padding: 8px 16px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 9; }
+#toast.on { opacity: 1; }
+footer { padding: 0 24px 20px; color: var(--dim); font-size: 12px; }
+dialog { background: var(--bg); color: var(--fg); border: 4px solid var(--green); max-width: 760px; }
+dialog::backdrop { background: rgba(0, 0, 0, .7); }
+dialog pre { white-space: pre-wrap; font-size: 11px; max-height: 60vh; overflow: auto; }
+</style>
+</head>
+<body>
+<nav class="tabs" aria-label="Tools"><a href="citizen_creator.html">CITIZEN</a><a href="pattern_creator.html">PATTERN</a><a href="assets.html" class="on" aria-current="page">ASSETS</a></nav>
+<header><h1>ASSETS</h1></header>
+<div id="bar">
+  <div class="chips" id="c-main"><small>Main</small></div>
+  <div class="chips" id="c-light"><small>Light</small></div>
+  <div class="chips" id="c-dark"><small>Dark</small></div>
+  <div class="chips" id="c-bg"><small>Backgr.</small></div>
+  <label class="c"><input type="checkbox" id="withbg"> background in downloads</label>
+  <label class="c">PNG <select id="size"><option>256</option><option>512</option><option selected>1024</option><option>2048</option><option>4096</option></select> px</label>
+  <button class="btn" id="zip">download all (.zip, SVG)</button>
+</div>
+<main id="main"></main>
+<footer>
+  Artwork: 40C3 design team, CC0 · unofficial community tool · fonts Jersey 10 &amp; Hack ·
+  <a href="#" id="about">licences</a>
+</footer>
+<dialog id="lic"><pre id="font-licenses">__FONT_LICENSES__</pre><button class="btn" id="lic-close">close</button></dialog>
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+document.head.appendChild(document.createElement("style")).textContent =
+  `@font-face{font-family:"Jersey 10";src:url(__FONT_JERSEY__) format("woff2");}` +
+  `@font-face{font-family:"Hack";font-weight:400;src:url(__FONT_HACK__) format("woff2");}` +
+  `@font-face{font-family:"Hack";font-weight:700;src:url(__FONT_HACK_BOLD__) format("woff2");}`;
+
+const ASSETS = /*__ASSETS__*/[];
+// the palette of the styleguide: 0-7, A, B
+const PALETTE = [["0", "#75b44b"], ["1", "#15ada3"], ["2", "#9fa4e8"], ["3", "#c892d6"], ["4", "#ee5da2"], ["5", "#ea6f82"], ["6", "#f88a30"], ["7", "#ffbc40"], ["A", "#ebedf0"], ["B", "#001300"]];
+const NS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const r2 = v => Math.round(v * 100) / 100;
+const C = { main: "#75b44b", light: "#ebedf0", dark: "#001300", bg: "#001300" };
+
+/* ---------- drawing ---------- */
+const paint = (m, c) => m.replace(/@[MLD]/g, t => ({ "@M": c.main, "@L": c.light, "@D": c.dark }[t]));
+// Logos are one colour: on a background of that same colour they would vanish, so swap in a contrast.
+function backdrop(c) {
+  if (!C.bg) return "";
+  return c.main.toLowerCase() === C.bg.toLowerCase() && c.fixed ? (C.bg.toLowerCase() === "#75b44b" ? "#001300" : "#75b44b") : C.bg;
+}
+function assetSvg(a, c, { bg = false, size = 0 } = {}) {
+  const pad = bg ? Math.max(a.w, a.h) * .1 : 0, w = a.w + 2 * pad, h = a.h + 2 * pad;
+  const k = size ? size / Math.max(w, h) : 1, fill = bg ? backdrop(c) : "";
+  return `<svg xmlns="${NS}" viewBox="${r2(-pad)} ${r2(-pad)} ${r2(w)} ${r2(h)}" width="${r2(w * k)}" height="${r2(h * k)}">` +
+    (fill ? `<rect x="${r2(-pad)}" y="${r2(-pad)}" width="${r2(w)}" height="${r2(h)}" fill="${fill}"/>` : "") + paint(a.m, c) + `</svg>`;
+}
+// what to show: logos once per palette colour, everything else in the chosen colours
+function items() {
+  const out = [];
+  for (const a of ASSETS) {
+    if (a.g === "Logos") for (const [key, hex] of PALETTE) out.push({ a, name: `${a.n}_${key}`, c: { main: hex, light: C.light, dark: C.dark, fixed: true } });
+    else out.push({ a, name: a.n, c: C });
+  }
+  return out;
+}
+let ITEMS = [];
+function render() {
+  ITEMS = items();
+  const groups = [...new Set(ASSETS.map(a => a.g))];
+  $("main").innerHTML = groups.map(g => {
+    const list = ITEMS.map((it, i) => [it, i]).filter(([it]) => it.a.g === g);
+    const note = g === "Logos" ? `<p class="note">The logo and the logo with text in every color of the palette (0–7, A, B). The three color choices above do not apply here.</p>`
+      : g === "Patterns" ? `<p class="note">Line art in the main color.</p>` : "";
+    return `<h2>${g}<small>${list.length}</small></h2>${note}<div class="grid">` + list.map(([it, i]) => {
+      const fill = backdrop(it.c);
+      return `<div class="card" data-i="${i}"><div class="pic"${fill ? ` style="background:${fill}"` : ""}>${assetSvg(it.a, it.c)}</div>
+        <div class="name" title="${it.name}">${it.name}</div>
+        <div class="acts"><button class="btn tiny" data-x="svg">SVG</button><button class="btn tiny" data-x="png">PNG</button><button class="btn tiny" data-x="copy" title="copy the SVG code">copy</button></div></div>`;
+    }).join("") + `</div>`;
+  }).join("");
+}
+function chips(id, key, none) {
+  const el = $(id), label = el.querySelector("small").outerHTML, v = String(C[key]).toLowerCase();
+  el.innerHTML = label + PALETTE.map(([k, hex]) => `<button class="chip${v === hex ? " on" : ""}" style="--c:${hex}" data-c="${hex}" title="${k} ${hex}"></button>`).join("") +
+    `<input type="color" value="${/^#[0-9a-f]{6}$/i.test(C[key]) ? C[key] : "#75b44b"}" title="other color">` +
+    (none ? `<button class="chip none${C[key] ? "" : " on"}" data-c="" title="transparent"></button>` : "");
+}
+function renderBar() { chips("c-main", "main"); chips("c-light", "light"); chips("c-dark", "dark"); chips("c-bg", "bg", true); }
+for (const [id, key] of [["c-main", "main"], ["c-light", "light"], ["c-dark", "dark"], ["c-bg", "bg"]]) {
+  $(id).addEventListener("click", e => { const b = e.target.closest("button[data-c]"); if (b) { C[key] = b.dataset.c; renderBar(); render(); } });
+  $(id).addEventListener("change", e => { if (e.target.type === "color") { C[key] = e.target.value; renderBar(); render(); } });
+}
+
+/* ---------- downloads ---------- */
+function download(blob, name) {
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: name });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+async function toPng(svg) {
+  const w = +svg.match(/ width="([\d.]+)"/)[1], h = +svg.match(/ height="([\d.]+)"/)[1];
+  const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const cv = Object.assign(document.createElement("canvas"), { width: Math.round(w), height: Math.round(h) });
+    cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+    return await new Promise((ok, fail) => cv.toBlob(b => b ? ok(b) : fail(new Error("PNG encoding failed")), "image/png"));
+  } finally { URL.revokeObjectURL(url); }
+}
+const fileSvg = it => assetSvg(it.a, it.c, { bg: $("withbg").checked, size: 512 });
+$("main").addEventListener("click", async e => {
+  const x = e.target.closest("[data-x]")?.dataset.x, it = ITEMS[e.target.closest(".card")?.dataset.i];
+  if (!x || !it) return;
+  try {
+    if (x === "svg") download(new Blob([fileSvg(it)], { type: "image/svg+xml" }), it.name + ".svg");
+    else if (x === "png") download(await toPng(assetSvg(it.a, it.c, { bg: $("withbg").checked, size: +$("size").value })), it.name + ".png");
+    else { await navigator.clipboard.writeText(fileSvg(it)); toast("SVG code copied"); }
+  } catch (err) { toast("That did not work: " + err.message); }
+});
+
+// a minimal zip file (stored, not compressed)
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c; } return t; })();
+function crc32(u8) { let c = -1; for (let i = 0; i < u8.length; i++) c = CRC[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ -1) >>> 0; }
+function zip(files) {           // [{ name, data: Uint8Array }]
+  const enc = new TextEncoder(), parts = [], central = [];
+  let offset = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name), crc = crc32(f.data);
+    const head = new DataView(new ArrayBuffer(30));
+    head.setUint32(0, 0x04034b50, true); head.setUint16(4, 20, true); head.setUint16(6, 0x0800, true); head.setUint16(8, 0, true);
+    head.setUint16(10, 0, true); head.setUint16(12, 0x21, true); head.setUint32(14, crc, true);
+    head.setUint32(18, f.data.length, true); head.setUint32(22, f.data.length, true); head.setUint16(26, name.length, true);
+    const cen = new DataView(new ArrayBuffer(46));
+    cen.setUint32(0, 0x02014b50, true); cen.setUint16(4, 20, true); cen.setUint16(6, 20, true); cen.setUint16(8, 0x0800, true);
+    cen.setUint16(14, 0x21, true); cen.setUint32(16, crc, true); cen.setUint32(20, f.data.length, true); cen.setUint32(24, f.data.length, true);
+    cen.setUint16(28, name.length, true); cen.setUint32(42, offset, true);
+    parts.push(head, name, f.data);
+    central.push(cen, name);
+    offset += 30 + name.length + f.data.length;
+  }
+  const size = central.reduce((n, p) => n + p.byteLength, 0), end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, size, true); end.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, end], { type: "application/zip" });
+}
+$("zip").addEventListener("click", () => {
+  const enc = new TextEncoder();
+  const files = ITEMS.map(it => ({ name: `40c3-assets/${it.a.g.replace(/ \/ /g, "_").replace(/ /g, "_")}/${it.name}.svg`, data: enc.encode(fileSvg(it)) }));
+  download(zip(files), "40c3-assets.zip");
+  toast(`${files.length} SVG files in the current colors`);
+});
+
+$("about").addEventListener("click", e => { e.preventDefault(); $("lic").showModal(); });
+$("lic-close").addEventListener("click", () => $("lic").close());
+let toastTimer;
+function toast(msg) { $("toast").textContent = msg; $("toast").classList.add("on"); clearTimeout(toastTimer); toastTimer = setTimeout(() => $("toast").classList.remove("on"), 3200); }
+
+renderBar();
+render();
+</script>
+</body>
+</html>
