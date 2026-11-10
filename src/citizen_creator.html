@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CITIZEN_CREATOR · 40C3</title>
+<link rel="icon" href="__IMG_40C3_Logo_0__">
+<style>
+:root {
+  --bg: #001300;
+  --green: #75b44b;
+  --fg: #ebedf0;
+  --black: #000;
+  --dim: rgba(117, 180, 75, .45);
+  --line: 4px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); }
+body {
+  font: 15px/1.4 "Hack", ui-monospace, Menlo, Consolas, monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px dashed var(--fg); outline-offset: 2px; }
+
+.app { position: relative; max-width: 1560px; margin: 0 auto; padding: 20px 24px 0; }
+
+/* ---------- header ---------- */
+header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; min-height: 110px; }
+header .deco-tl { width: 230px; margin-left: -24px; }
+h1 {
+  font: 400 clamp(44px, 7vw, 92px)/.9 "Jersey 10", "Hack", monospace;
+  color: var(--green); margin: 0; letter-spacing: .02em; text-align: center; white-space: nowrap;
+}
+.top-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.top-actions small { color: var(--dim); font-size: 12px; text-align: right; }
+
+.btn {
+  background: var(--bg); border: var(--line) solid var(--green); color: var(--fg);
+  padding: 10px 18px; font-size: 18px; white-space: nowrap;
+}
+.btn:hover { background: var(--green); color: var(--bg); }
+.btn.small { border-width: 2px; padding: 4px 10px; font-size: 13px; }
+.btn.small[disabled] { opacity: .35; cursor: default; background: var(--bg); color: var(--fg); }
+
+/* ---------- main grid ---------- */
+main { display: grid; grid-template-columns: minmax(250px, 1fr) minmax(340px, 540px) minmax(300px, 1fr); gap: 36px; align-items: start; }
+.col-left { padding-top: 26px; max-width: 380px; justify-self: center; width: 100%; }
+.col-right { max-width: 400px; justify-self: center; width: 100%; }
+
+.field { display: block; margin-bottom: 30px; }
+.field span { display: block; }
+.field input {
+  width: 100%; background: transparent; border: 0; border-bottom: 3px solid var(--green);
+  padding: 10px 0 6px; font-size: 17px; font-weight: 700; outline: none; border-radius: 0;
+}
+.field input:focus { border-bottom-color: var(--fg); }
+
+h2 {
+  font: 400 30px/1 "Jersey 10", monospace; color: var(--green); margin: 28px 0 12px;
+  letter-spacing: .03em; text-transform: uppercase;
+}
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.row > .lbl { min-width: 96px; }
+select {
+  background: var(--bg); border: 2px solid var(--green); padding: 4px 6px; border-radius: 0;
+  max-width: 100%;
+}
+.chip {
+  width: 34px; height: 34px; border: 2px solid var(--green); padding: 0; background: var(--c, #000);
+  position: relative;
+}
+.chip.inherit { background: repeating-linear-gradient(45deg, transparent 0 5px, var(--dim) 5px 7px); }
+.chips { display: flex; gap: 14px; flex-wrap: wrap; }
+.chips label { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; }
+
+/* ---------- stage ---------- */
+#stage { display: block; width: 100%; aspect-ratio: 1; touch-action: none; user-select: none; }
+#stage.cutout {
+  background: repeating-conic-gradient(#0b2a0b 0 25%, #041a04 0 50%) 0 0 / 28px 28px;
+  outline: 2px dashed var(--dim); outline-offset: -2px;
+}
+#stage [data-i] { cursor: grab; }
+#stage.dragging [data-i] { cursor: grabbing; }
+.connector { display: block; width: 100%; height: 84px; margin-top: -5%; }
+.frame-full .connector, .frame-none .connector { margin-top: 0; }
+#enter {
+  display: block; width: 78%; margin: -4px auto 0; background: var(--black); color: var(--fg);
+  border: 5px solid var(--green); font-size: clamp(30px, 4vw, 54px); font-weight: 700;
+  padding: 6px 0 4px; letter-spacing: .02em;
+}
+#enter:hover { background: var(--green); color: var(--black); }
+.stage-tools { display: flex; justify-content: center; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.hint { color: var(--dim); font-size: 12px; text-align: center; margin: 10px 0 0; }
+
+/* ---------- part pickers ---------- */
+#slots {
+  max-height: min(64vh, 640px); overflow-y: auto; padding: 0 22px 0 0; margin-top: 26px;
+  scrollbar-width: thin; scrollbar-color: var(--green) transparent;
+}
+.slot { margin-bottom: 18px; }
+.slot-head { display: flex; align-items: baseline; gap: 8px; margin: 0 0 6px 58px; }
+.slot-head .name { color: var(--dim); font-size: 12px; flex: 1; }
+.slot-head button { background: none; border: 0; color: var(--green); padding: 0 4px; font-weight: 700; }
+.slot-head button:hover { color: var(--fg); }
+.slot-pick { display: grid; grid-template-columns: 50px 1fr 50px; align-items: center; gap: 8px; }
+.arrow { background: none; border: 0; padding: 6px; height: 64px; }
+.arrow svg { width: 100%; height: 100%; display: block; }
+.arrow polyline { fill: none; stroke: var(--green); stroke-width: 7; }
+.arrow:hover polyline { stroke: var(--fg); }
+.thumb {
+  height: 86px; background: var(--black); border: var(--line) solid var(--green); padding: 8px;
+  display: flex; align-items: center; justify-content: center; color: var(--dim); font-size: 13px;
+}
+.thumb svg { max-width: 100%; max-height: 100%; width: 100%; height: 100%; filter: drop-shadow(0 0 1.5px #75b44b) drop-shadow(0 0 1px #75b44b); }
+.slot.selected .thumb { border-color: var(--fg); }
+.slot.selected .slot-head > span:first-child { text-decoration: underline; font-weight: 700; }
+
+/* ---------- adjust panel ---------- */
+#adjust { border-top: 3px solid var(--green); margin-top: 14px; padding-top: 4px; }
+#adjust h2 { margin-top: 14px; font-size: 26px; }
+#adjust .lbl { min-width: 58px; }
+input[type=range] { flex: 1; accent-color: var(--green); min-width: 80px; }
+#adjust output { min-width: 48px; text-align: right; font-size: 12px; color: var(--dim); }
+
+/* ---------- palette popover ---------- */
+#pop {
+  position: fixed; z-index: 50; background: var(--bg); border: 3px solid var(--green);
+  padding: 10px; display: none; width: 216px; box-shadow: 8px 8px 0 rgba(0,0,0,.6);
+}
+#pop.open { display: block; }
+#pop .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+#pop .sw { width: 100%; aspect-ratio: 1; border: 2px solid var(--green); padding: 0; font-size: 11px; font-weight: 700; }
+#pop .sw:hover { border-color: var(--fg); }
+#pop .extra { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 12px; }
+#pop input[type=color] { width: 40px; height: 28px; padding: 0; border: 2px solid var(--green); background: none; }
+
+/* ---------- export dialog ---------- */
+dialog {
+  background: var(--bg); color: var(--fg); border: 5px solid var(--green); padding: 22px 26px;
+  width: min(980px, 94vw); max-height: 94vh;
+}
+dialog::backdrop { background: rgba(0, 8, 0, .82); }
+dialog h2 { font-size: 48px; margin: 0 0 4px; }
+dialog h3 { font-size: 15px; margin: 0 0 8px; text-decoration: underline; color: var(--green); }
+.exports { display: grid; grid-template-columns: 1fr 1.6fr; gap: 26px; margin: 16px 0 18px; }
+.exports img { display: block; width: 100%; border: 2px solid var(--dim); background: repeating-conic-gradient(#0b2a0b 0 25%, #041a04 0 50%) 0 0 / 20px 20px; }
+.exports .row { margin: 10px 0 0; }
+#json { width: 100%; height: 150px; background: var(--black); border: 2px solid var(--green); padding: 8px; font-size: 12px; resize: vertical; white-space: pre; }
+.close-x { position: absolute; top: 10px; right: 14px; background: none; border: 0; font-size: 28px; color: var(--green); }
+
+#toast {
+  position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 100;
+  background: var(--green); color: var(--bg); font-weight: 700; padding: 10px 18px;
+  opacity: 0; pointer-events: none; transition: opacity .2s; max-width: 90vw;
+}
+#toast.show { opacity: 1; }
+body.dropping::after {
+  content: "Drop SVG or JSON"; position: fixed; inset: 12px; z-index: 90; border: 5px dashed var(--green);
+  background: rgba(0, 19, 0, .85); display: grid; place-items: center;
+  font: 400 64px "Jersey 10", monospace; color: var(--green);
+}
+
+.credits { text-align: center; color: var(--dim); font-size: 12px; margin: 14px 0 18px; }
+.credits button { background: none; border: 0; padding: 0; color: var(--green); text-decoration: underline; font-size: inherit; }
+#lic a { color: var(--green); }
+#lic pre { white-space: pre-wrap; font: 11px/1.45 "Hack", monospace; background: var(--black); border: 2px solid var(--green); padding: 10px; max-height: 50vh; overflow: auto; }
+
+/* ---------- decoration ---------- */
+footer { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; height: 120px; margin-top: 10px; pointer-events: none; }
+footer img { display: block; max-height: 110px; }
+footer .grp { display: flex; align-items: flex-end; gap: 22px; }
+.deco-side { position: absolute; left: -6px; top: 250px; width: 120px; pointer-events: none; display: none; }
+@media (min-width: 1700px) { .deco-side { display: block; left: -110px; } }
+
+@media (max-width: 1080px) {
+  main { grid-template-columns: 1fr 1fr; }
+  .col-center { grid-column: 1 / -1; grid-row: 1; max-width: 540px; justify-self: center; width: 100%; }
+  header { grid-template-columns: 1fr; justify-items: center; }
+  header .deco-tl { display: none; }
+  .top-actions { align-items: center; }
+}
+@media (max-width: 700px) {
+  main { grid-template-columns: 1fr; }
+  .col-center { grid-column: auto; }
+  .exports { grid-template-columns: 1fr; }
+  footer { display: none; }
+  #slots { max-height: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <img class="deco-side" src="__IMG_Pattern_Datenklo2__" alt="">
+  <header>
+    <img class="deco-tl" src="__IMG_Pattern_Datenklo1__" alt="">
+    <h1>CITIZEN_CREATOR</h1>
+    <div class="top-actions">
+      <button class="btn" id="upload">Upload a SVG</button>
+      <small>…or a citizen .json — adds your own<br>part, or reloads an exported citizen</small>
+      <input type="file" id="file" accept=".svg,.json,image/svg+xml,application/json" hidden>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="col-left">
+      <label class="field"><span>Name</span><input data-f="name" maxlength="60" autocomplete="off" spellcheck="false"></label>
+      <label class="field"><span>Travel destination</span><input data-f="destination" maxlength="60" autocomplete="off" spellcheck="false"></label>
+      <label class="field"><span>Remembered the 6-2-1?</span><input data-f="rule621" maxlength="60" autocomplete="off" spellcheck="false"></label>
+      <label class="field"><span>Cause of citizenship</span><input data-f="cause" maxlength="60" autocomplete="off" spellcheck="false"></label>
+
+      <h2>Colors</h2>
+      <div class="row"><span class="lbl">Variant</span><select id="preset"></select></div>
+      <div class="chips" id="colors"></div>
+      <h2>Frame</h2>
+      <div class="row">
+        <select id="frame">
+          <option value="box">Framed (parts may poke out the top)</option>
+          <option value="full">Full bleed square</option>
+          <option value="none">Cut-out, transparent</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="col-center">
+      <svg id="stage" xmlns="http://www.w3.org/2000/svg"></svg>
+      <svg class="connector" viewBox="0 0 540 84" preserveAspectRatio="none" aria-hidden="true">
+        <polyline points="380,0 380,36 144,36 144,84" fill="none" stroke="#75b44b" stroke-width="10"/>
+      </svg>
+      <button id="enter">ENTER</button>
+      <div class="stage-tools">
+        <button class="btn small" id="random">Random citizen</button>
+        <button class="btn small" id="undo">Undo</button>
+        <button class="btn small" id="reset">Start over</button>
+      </div>
+      <p class="hint">Drag a part to move it · scroll to resize · arrow keys nudge · Del removes</p>
+    </section>
+
+    <section class="col-right">
+      <div id="slots"></div>
+      <div id="adjust"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="grp"><img src="__IMG_Pattern_Dots__" alt="" style="height:80px"><img src="__IMG_Pattern_Mouse__" alt="" style="height:110px"></div>
+    <img src="__IMG_Pattern_Boxes__" alt="" style="height:22px; margin-bottom:18px; opacity:.8">
+    <div class="grp"><img src="__IMG_Pattern_Lime__" alt="" style="height:90px"><img src="__IMG_Pattern_Oscilloscope__" alt="" style="height:110px"></div>
+  </footer>
+</div>
+
+<p class="credits">
+  Unofficial community tool · artwork: 40C3 design team, CC0 · fonts: Hack (MIT), Jersey 10 (OFL 1.1) ·
+  <button id="about">licences</button>
+</p>
+<dialog id="lic">
+  <button class="close-x" id="lic-close" aria-label="Close">✕</button>
+  <h2>Licences</h2>
+  <p>The 40C3 design concept and assets are released under
+  <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a> by the 40C3 design team
+  (<a href="https://events.ccc.de/congress/2026/infos/styleguide/">styleguide</a>).
+  This tool is an unofficial community project. The fonts embedded in this file come with their own licences:</p>
+  <pre id="font-licenses">__FONT_LICENSES__</pre>
+</dialog>
+
+<div id="pop"></div>
+<div id="toast" role="status"></div>
+
+<dialog id="dlg">
+  <button class="close-x" id="dlg-close" aria-label="Close">✕</button>
+  <h2>Citizen registered</h2>
+  <div>Pick your papers. Everything is generated right here in your browser.</div>
+  <div class="exports">
+    <div>
+      <h3>Avatar</h3>
+      <img id="prev-avatar" alt="Avatar preview">
+      <div class="row">
+        <button class="btn small" data-x="avatar-svg">SVG</button>
+        <button class="btn small" data-x="avatar-png">PNG</button>
+        <select id="png-size" title="PNG size"><option>512</option><option selected>1024</option><option>2048</option><option>4096</option></select><span>px</span>
+      </div>
+    </div>
+    <div>
+      <h3>Citizen pass</h3>
+      <img id="prev-card" alt="Citizen pass preview">
+      <div class="row">
+        <button class="btn small" data-x="card-svg">SVG</button>
+        <button class="btn small" data-x="card-png">PNG</button>
+      </div>
+    </div>
+  </div>
+  <h3>Citizen file — load it again later to keep editing</h3>
+  <div class="row">
+    <button class="btn small" data-x="json">Download .json</button>
+    <button class="btn small" data-x="copy-json">Copy JSON</button>
+    <button class="btn small" data-x="copy-link">Copy link</button>
+    <button class="btn small" data-x="load-text">Load from text below</button>
+  </div>
+  <textarea id="json" spellcheck="false"></textarea>
+  <p class="hint" style="text-align:left">The SVG exports carry the same data inside — “Upload a SVG” reopens them too.</p>
+</dialog>
+
+<script>
+"use strict";
+/* ====================================================================
+   Data (inlined by build.py)
+   ==================================================================== */
+const PARTS = /*__PARTS__*/{};
+const LOGO = /*__LOGO__*/{};
+const FONT_CSS =
+  `@font-face{font-family:"Jersey 10";src:url(__FONT_JERSEY__) format("woff2");}` +
+  `@font-face{font-family:"Hack";font-weight:400;src:url(__FONT_HACK__) format("woff2");}` +
+  `@font-face{font-family:"Hack";font-weight:700;src:url(__FONT_HACK_BOLD__) format("woff2");}`;
+document.head.appendChild(Object.assign(document.createElement("style"), { textContent: FONT_CSS }));
+
+/* ====================================================================
+   Model
+   ==================================================================== */
+const FORMAT = "40c3-citizen", VERSION = 1;
+const FIELDS = ["name", "destination", "rule621", "cause"];
+const FIELD_LABELS = { name: "Name", destination: "Travel destination", rule621: "Remembered the 6-2-1?", cause: "Cause of citizenship" };
+const COLOR_KEYS = ["background", "main", "light", "dark"];
+const TOKEN = { M: "main", L: "light", D: "dark" };
+
+// Styleguide palette (0x33) plus pure black/white.
+const PALETTE = [
+  ["0", "#75b44b"], ["1", "#15ada3"], ["2", "#9fa4e8"], ["3", "#c892d6"],
+  ["4", "#ee5da2"], ["5", "#ea6f82"], ["6", "#f88a30"], ["7", "#ffbc40"],
+  ["A", "#ebedf0"], ["B", "#001300"], ["", "#000000"], ["", "#ffffff"],
+];
+// Loosely after the "color variants" pages of the styleguide.
+const PRESETS = {
+  "Terminal [0,A,B]":   { background: "#001300", main: "#75b44b", light: "#ebedf0", dark: "#000000" },
+  "On Zero Days We Wear Pink": { background: "#ee5da2", main: "#75b44b", light: "#ebedf0", dark: "#001300" },
+  "Followed the Rabbit": { background: "#75b44b", main: "#ebedf0", light: "#ffffff", dark: "#001300" },
+  "Ahh! My Eyes!":      { background: "#ebedf0", main: "#15ada3", light: "#ffffff", dark: "#001300" },
+  "Autumn Is Over":     { background: "#513d3a", main: "#f88a30", light: "#ffbc40", dark: "#001300" },
+  "Looking Dangerous":  { background: "#ffbc40", main: "#f88a30", light: "#ebedf0", dark: "#001300" },
+  "Soft Cuteness":      { background: "#9fa4e8", main: "#ee5da2", light: "#ebedf0", dark: "#001300" },
+  "Unicorn":            { background: "#001300", main: "#c892d6", light: "#ebedf0", dark: "#000000" },
+};
+
+// Stacking rank, bottom to top. Parts flagged `back` sit behind the head.
+const SLOTS = [
+  { id: "head",  label: "Head",  rank: 2 },
+  { id: "eyes",  label: "Eyes",  rank: 5 },
+  { id: "nose",  label: "Nose",  rank: 4 },
+  { id: "mouth", label: "Mouth", rank: 3 },
+  { id: "hair",  label: "Hair",  rank: 6 },
+  { id: "body",  label: "Body",  rank: 0 },
+  { id: "deco",  label: "Deco",  rank: 7 },
+  { id: "extra", label: "Extra", rank: 8 },
+];
+const SLOT = Object.fromEntries(SLOTS.map(s => [s.id, s]));
+const BY_SLOT = {};
+for (const [name, p] of Object.entries(PARTS)) (BY_SLOT[p.c] ||= []).push(name);
+
+// The source parts are tightly cropped and carry no position, so this table
+// says where each one lands on the 1000x1000 canvas: centre x/y and either a
+// target width (w) or height (h).
+const CANVAS = 1000, FRAME = { x: 110, y: 170, size: 780, stroke: 14 };
+const INNER = { x: FRAME.x + FRAME.stroke / 2, y: FRAME.y + FRAME.stroke / 2, size: FRAME.size - FRAME.stroke };
+const PLACE_SLOT = {
+  head:  { x: 500, y: 500, w: 500 },
+  body:  { x: 500, y: 860, w: 700 },
+  hair:  { x: 500, y: 320, w: 520 },
+  eyes:  { x: 500, y: 460, w: 300 },
+  nose:  { x: 500, y: 548, h: 80 },
+  mouth: { x: 500, y: 630, w: 200 },
+  deco:  { x: 500, y: 300, w: 300 },
+  extra: { x: 775, y: 300, w: 150 },
+};
+const PLACE = {
+  Head0: { x: 500, y: 500, w: 600 }, Head1: { x: 500, y: 500, w: 520 }, Head2: { x: 500, y: 500, w: 440 },
+  Head3: { x: 500, y: 500, w: 480 }, Head4: { x: 500, y: 480, w: 560 }, Head5: { x: 500, y: 520, h: 600 },
+  Head6: { x: 500, y: 500, w: 460 }, Head7: { x: 500, y: 590, h: 640 },
+  Body0: { x: 500, y: 860, w: 700 }, Body1: { x: 500, y: 854, w: 700 }, Body2: { x: 500, y: 800, w: 620 }, Body3: { x: 500, y: 830, w: 620 },
+  Hair0: { x: 500, y: 285, w: 540 }, Hair1: { x: 520, y: 285, w: 270 }, Hair2: { x: 500, y: 300, w: 600, back: true },
+  Eyes2: { x: 500, y: 460, w: 200 }, Eyes6: { x: 500, y: 460, w: 400 }, Eyes7: { x: 500, y: 460, w: 400 }, Eyes11: { x: 500, y: 460, w: 330 },
+  Nose1: { x: 500, y: 552, w: 90 }, Nose2: { x: 500, y: 565, w: 340 }, Nose3: { x: 500, y: 540, h: 100 }, Nose4: { x: 500, y: 540, h: 90 },
+  Mouth2: { x: 500, y: 700, h: 220 }, Mouth4: { x: 500, y: 630, w: 150 }, Mouth6: { x: 500, y: 630, w: 150 }, Mouth10: { x: 500, y: 612, w: 230 },
+  Deco0: { x: 500, y: 560, w: 650 }, Deco1: { x: 500, y: 290, w: 480 }, Deco2: { x: 770, y: 300, w: 140 },
+  Deco3: { x: 500, y: 598, w: 260 }, Deco4: { x: 500, y: 250, w: 300 }, Deco5: { x: 500, y: 270, w: 540 },
+  Deco6: { x: 500, y: 475, w: 350 }, Deco7: { x: 500, y: 230, w: 440 }, Deco8: { x: 500, y: 215, w: 62 },
+  Deco9: { x: 545, y: 440, w: 300 }, Deco10: { x: 500, y: 560, w: 400 },
+};
+
+function placement(name) {
+  const p = PARTS[name], d = PLACE[name] || PLACE_SLOT[p.c];
+  return { x: d.x, y: d.y, scale: d.w ? d.w / p.w : d.h / p.h, back: !!d.back };
+}
+function newLayer(name) {
+  const d = placement(name);
+  return { slot: PARTS[name].c, part: name, x: d.x, y: d.y, scale: d.scale, rot: 0, flip: false };
+}
+function rankOf(L) {
+  if (L.slot === "custom") return 9;
+  return placement(L.part).back ? 1 : SLOT[L.slot].rank;
+}
+function blankCitizen() {
+  return { name: "", destination: "", rule621: "", cause: "", colors: { ...PRESETS["Terminal [0,A,B]"] }, frame: "box", layers: [] };
+}
+function starterCitizen() {
+  const c = blankCitizen();
+  for (const n of ["Body1", "Head0", "Mouth8", "Nose1", "Eyes9", "Hair0"]) c.layers.push(newLayer(n));
+  return c;
+}
+
+let S = starterCitizen();   // the citizen being edited
+let sel = -1;               // index of the selected layer
+const history = [];
+
+/* ====================================================================
+   Small helpers
+   ==================================================================== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const r3 = n => Math.round(n * 1000) / 1000;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const isColor = v => typeof v === "string" && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v);
+function num(v, fallback, min, max) {
+  v = Number(v);
+  return Number.isFinite(v) ? clamp(v, min, max) : fallback;
+}
+function rgb(hex) {
+  let h = hex.slice(1);
+  if (h.length === 3) h = [...h].map(c => c + c).join("");
+  return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
+}
+function luminance(hex) {
+  const [r, g, b] = rgb(hex).map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
+  return .2126 * r + .7152 * g + .0722 * b;
+}
+function contrast(a, b) {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + .05) / (lo + .05);
+}
+let toastTimer;
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 3200);
+}
+function layerName(L) { return L.slot === "custom" ? (L.name || "custom") : L.part; }
+function layerDef(L) { return L.slot === "custom" ? { w: L.w, h: L.h, m: L.svg } : PARTS[L.part]; }
+function baseScale(L) { return L.slot === "custom" ? 300 / Math.max(L.w, L.h) : placement(L.part).scale; }
+
+/* ====================================================================
+   SVG generation — one code path for the editor and every export
+   ==================================================================== */
+function layerColors(L) { return { ...S.colors, ...(L.colors || {}) }; }
+function paint(markup, c) { return markup.replace(/@([MLD])/g, (_, k) => c[TOKEN[k]]); }
+
+function layerSvg(L, i, selected) {
+  const d = layerDef(L), c = layerColors(L);
+  const t = `translate(${r3(L.x)} ${r3(L.y)}) rotate(${r3(L.rot)}) scale(${r3(L.flip ? -L.scale : L.scale)} ${r3(L.scale)}) translate(${r3(-d.w / 2)} ${r3(-d.h / 2)})`;
+  const fill = L.slot === "custom" ? "" : ` fill="${c.dark}"`;
+  const idx = i == null ? "" : ` data-i="${i}"`;
+  const box = selected
+    ? `<rect width="${d.w}" height="${d.h}" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="6 5" vector-effect="non-scaling-stroke" pointer-events="none" style="mix-blend-mode:difference"/>`
+    : "";
+  return `<g${idx} transform="${t}"${fill}>${paint(d.m, c)}${box}</g>`;
+}
+
+// frame: "box" | "full" | "none".  Returns { viewBox, body }.
+function avatar({ frame = S.frame, interactive = false, clipId = "cc-clip" } = {}) {
+  const c = S.colors;
+  const layers = S.layers.map((L, i) => layerSvg(L, interactive ? i : null, interactive && i === sel)).join("");
+  if (frame === "full") {
+    return {
+      viewBox: `${INNER.x} ${INNER.y} ${INNER.size} ${INNER.size}`, w: INNER.size, h: INNER.size,
+      body: `<rect x="${INNER.x}" y="${INNER.y}" width="${INNER.size}" height="${INNER.size}" fill="${c.background}"/>${layers}`,
+    };
+  }
+  if (frame === "none") return { viewBox: `0 0 ${CANVAS} ${CANVAS}`, w: CANVAS, h: CANVAS, body: layers };
+  // Framed: clipped left, right and bottom; open at the top like Mona's horn.
+  // Outside the frame stays transparent.
+  return {
+    viewBox: `0 0 ${CANVAS} ${CANVAS}`, w: CANVAS, h: CANVAS,
+    body:
+      `<rect x="${FRAME.x}" y="${FRAME.y}" width="${FRAME.size}" height="${FRAME.size}" fill="${c.background}" stroke="${c.main}" stroke-width="${FRAME.stroke}"/>` +
+      `<clipPath id="${clipId}"><rect x="${INNER.x}" y="-2000" width="${INNER.size}" height="${INNER.y + INNER.size + 2000}"/></clipPath>` +
+      `<g clip-path="url(#${clipId})">${layers}</g>`,
+  };
+}
+
+function metadata() {
+  return `<metadata id="citizen-data" data-format="${FORMAT}">${esc(JSON.stringify(serialize()))}</metadata>`;
+}
+function avatarSvg(size) {
+  const a = avatar();
+  const dim = size ? ` width="${size}" height="${size}"` : "";
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${a.viewBox}"${dim}>` +
+    `<title>${esc(S.name || "Model citizen")}</title>${metadata()}${a.body}</svg>`;
+}
+
+const CARD = { w: 1600, h: 1000 };
+function citizenId() {
+  let h = 0x811c9dc5;
+  for (const ch of JSON.stringify(serialize())) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193); }
+  return "0x" + (h >>> 0).toString(16).padStart(8, "0").toUpperCase();
+}
+function cardSvg(width) {
+  const c = S.colors, bg = c.background;
+  // The pass has to stay readable on any background the citizen picked.
+  const ink = [c.light, c.dark, "#ebedf0", "#001300"].sort((a, b) => contrast(b, bg) - contrast(a, bg))[0];
+  const accent = contrast(c.main, bg) >= 1.7 ? c.main : ink;
+  const a = avatar({ frame: "full" });
+  const hack = `font-family="Hack, monospace"`;
+  const px = 80, py = 270, ps = 600, fx = 760, fw = CARD.w - 80 - fx;
+  const maxChars = Math.floor(fw / (38 * .602));
+  let fields = "";
+  FIELDS.forEach((f, i) => {
+    const y = py + 28 + i * 142;
+    let v = S[f].trim() || "—";
+    if (v.length > maxChars) v = v.slice(0, maxChars - 1) + "…";
+    fields +=
+      `<text x="${fx}" y="${y}" ${hack} font-size="25" fill="${accent}">${esc(FIELD_LABELS[f])}</text>` +
+      `<text x="${fx}" y="${y + 52}" ${hack} font-weight="700" font-size="38" fill="${ink}">${esc(v)}</text>` +
+      `<line x1="${fx}" y1="${y + 74}" x2="${fx + fw}" y2="${y + 74}" stroke="${accent}" stroke-width="4"/>`;
+  });
+  const mrzName = (S.name || "CITIZEN").toUpperCase().normalize("NFD").replace(/[^A-Z0-9 ]/g, "").trim().replace(/ +/g, "<") || "CITIZEN";
+  const mrz = ("C<40C3<" + mrzName + "<<MODEL<CITIZEN").padEnd(66, "<").slice(0, 66);
+  const logoH = 150, logoS = logoH / LOGO.h;
+  const dim = width ? ` width="${width}" height="${width * CARD.h / CARD.w}"` : "";
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CARD.w} ${CARD.h}"${dim}>` +
+    `<title>${esc(S.name || "Model citizen")} — citizen pass</title>${metadata()}` +
+    `<style>${FONT_CSS}</style>` +
+    `<rect width="${CARD.w}" height="${CARD.h}" fill="${bg}"/>` +
+    `<rect x="26" y="26" width="${CARD.w - 52}" height="${CARD.h - 52}" fill="none" stroke="${accent}" stroke-width="10"/>` +
+    `<g transform="translate(${px} 66) scale(${r3(logoS)})">${paint(LOGO.m, { main: accent, light: ink, dark: ink })}</g>` +
+    `<text x="${px + LOGO.w * logoS + 34}" y="180" font-family="'Jersey 10', monospace" font-size="150" fill="${accent}">CITIZEN_PASS</text>` +
+    `<text x="${CARD.w - 80}" y="118" ${hack} font-weight="700" font-size="34" text-anchor="end" fill="${ink}">MODEL_CITIZENS</text>` +
+    `<text x="${CARD.w - 80}" y="166" ${hack} font-size="27" text-anchor="end" fill="${accent}">ID ${citizenId()}</text>` +
+    `<svg x="${px}" y="${py}" width="${ps}" height="${ps}" viewBox="${a.viewBox}">${a.body}</svg>` +
+    `<rect x="${px}" y="${py}" width="${ps}" height="${ps}" fill="none" stroke="${accent}" stroke-width="10"/>` +
+    fields +
+    `<text x="${px}" y="${CARD.h - 62}" ${hack} font-size="30" fill="${ink}" opacity=".75" textLength="${CARD.w - 2 * px}" lengthAdjust="spacing">${esc(mrz)}</text>` +
+    `</svg>`;
+}
+
+/* ====================================================================
+   Citizen file: serialize / load
+   ==================================================================== */
+function serialize() {
+  const out = { format: FORMAT, version: VERSION };
+  for (const f of FIELDS) out[f] = S[f];
+  out.colors = { ...S.colors };
+  out.frame = S.frame;
+  out.layers = S.layers.map(L => {
+    const o = L.slot === "custom" ? { slot: "custom", name: L.name, w: L.w, h: L.h } : { slot: L.slot, part: L.part };
+    Object.assign(o, { x: r3(L.x), y: r3(L.y), scale: Math.round(L.scale * 1e5) / 1e5, rot: r3(L.rot), flip: !!L.flip });
+    if (L.colors && Object.keys(L.colors).length) o.colors = { ...L.colors };
+    if (L.slot === "custom") o.svg = L.svg;
+    return o;
+  });
+  return out;
+}
+
+// Accepts anything shaped like a citizen file and fills in what is missing, so
+// a hand-written {"layers":[{"part":"Head4"},{"part":"Eyes0"}]} works too.
+function normalize(o) {
+  if (!o || typeof o !== "object" || !Array.isArray(o.layers)) throw new Error('Not a citizen file (no "layers" list).');
+  const c = blankCitizen();
+  let skipped = 0;
+  for (const f of FIELDS) if (o[f] != null) c[f] = String(o[f]).slice(0, 60);
+  for (const k of COLOR_KEYS) if (isColor(o.colors?.[k])) c.colors[k] = o.colors[k].toLowerCase();
+  if (["box", "full", "none"].includes(o.frame)) c.frame = o.frame;
+  for (const l of o.layers.slice(0, 200)) {
+    if (!l || typeof l !== "object") { skipped++; continue; }
+    let L, d;
+    if (typeof l.svg === "string") {
+      const w = num(l.w, 0, 1, 1e5), h = num(l.h, 0, 1, 1e5);
+      if (!w || !h) { skipped++; continue; }
+      L = { slot: "custom", name: String(l.name || "custom").slice(0, 80), w, h, svg: sanitizeMarkup(l.svg) };
+      d = { x: 500, y: 500, scale: 300 / Math.max(w, h) };
+    } else if (PARTS[l.part]) {
+      L = { slot: PARTS[l.part].c, part: l.part };
+      d = placement(l.part);
+    } else { skipped++; continue; }
+    L.x = num(l.x, d.x, -3000, 4000);
+    L.y = num(l.y, d.y, -3000, 4000);
+    L.scale = num(l.scale, d.scale, .005, 200);
+    L.rot = num(l.rot, 0, -360, 360);
+    L.flip = !!l.flip;
+    if (l.colors && typeof l.colors === "object") {
+      const lc = {};
+      for (const k of ["main", "light", "dark"]) if (isColor(l.colors[k])) lc[k] = l.colors[k].toLowerCase();
+      if (Object.keys(lc).length) L.colors = lc;
+    }
+    c.layers.push(L);
+  }
+  return { citizen: c, skipped };
+}
+function loadCitizen(obj, note = "Citizen loaded") {
+  const { citizen, skipped } = normalize(obj);
+  mutate(() => { S = citizen; sel = -1; });
+  syncFields();
+  toast(skipped ? `${note} — ${skipped} unknown layer(s) skipped` : note);
+}
+
+/* ---- uploaded SVGs ------------------------------------------------- */
+const SVG_NS = "http://www.w3.org/2000/svg";
+const BANNED = "script,foreignObject,iframe,object,embed,audio,video,style,metadata,title,desc,animate,animateTransform,animateMotion,set";
+function scrub(root) {
+  root.querySelectorAll(BANNED).forEach(el => el.remove());
+  for (const el of [root, ...root.querySelectorAll("*")]) {
+    for (const a of [...el.attributes]) {
+      const n = a.name.toLowerCase(), v = a.value.trim();
+      const isHref = n === "href" || n.endsWith(":href");
+      if (n.startsWith("on") ||
+          (isHref && !/^(#|data:image\/(png|jpe?g|gif|webp);)/i.test(v)) ||
+          /javascript:/i.test(v) ||
+          /url\(\s*['"]?(?!#)/i.test(v)) el.removeAttribute(a.name);
+    }
+  }
+}
+function innerMarkup(root) {
+  const ser = new XMLSerializer();
+  return [...root.childNodes].map(n => ser.serializeToString(n)).join("")
+    .replaceAll(` xmlns="${SVG_NS}"`, "").replace(/<!--[\s\S]*?-->/g, "").replace(/>\s+</g, "><").trim();
+}
+function parseSvg(text) {
+  const doc = new DOMParser().parseFromString(text, "image/svg+xml");
+  const root = doc.documentElement;
+  if (doc.querySelector("parsererror") || root.localName !== "svg") throw new Error("That is not a readable SVG.");
+  return root;
+}
+function sanitizeMarkup(markup) {
+  try {
+    const root = parseSvg(`<svg xmlns="${SVG_NS}" xmlns:xlink="http://www.w3.org/1999/xlink">${markup}</svg>`);
+    scrub(root);
+    return innerMarkup(root);
+  } catch { return ""; }
+}
+// Turns an arbitrary SVG into a self-contained layer: class styles become
+// inline styles and ids are made unique, so several Illustrator exports (which
+// all use .cls-1) can sit in one document without bleeding into each other.
+function svgToLayer(text, fileName) {
+  const root = parseSvg(text);
+  const styles = new Map();
+  for (const st of root.querySelectorAll("style")) {
+    for (const m of st.textContent.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^}]*)\}/g)) {
+      const selector = m[1].trim();
+      if (selector.startsWith("@")) continue;
+      try {
+        root.querySelectorAll(selector).forEach(el => styles.set(el, (styles.get(el) || "") + m[2].trim().replace(/\s+/g, " ") + ";"));
+      } catch { /* selector the browser cannot apply — skip it */ }
+    }
+  }
+  for (const [el, css] of styles) el.setAttribute("style", css + (el.getAttribute("style") || ""));
+  scrub(root);
+
+  const uid = "u" + Math.random().toString(36).slice(2, 7) + "-";
+  const ids = new Set([...root.querySelectorAll("[id]")].map(el => el.id));
+  for (const el of root.querySelectorAll("*")) {
+    for (const a of [...el.attributes]) {
+      if (a.name === "id") { el.setAttribute("id", uid + a.value); continue; }
+      if (a.name === "class") { el.removeAttribute("class"); continue; }
+      let v = a.value.replace(/url\(\s*['"]?#([^'")]+)['"]?\s*\)/g, (all, id) => ids.has(id) ? `url(#${uid}${id})` : all);
+      if ((a.name === "href" || a.name.endsWith(":href")) && v.startsWith("#") && ids.has(v.slice(1))) v = "#" + uid + v.slice(1);
+      if (v !== a.value) el.setAttribute(a.name, v);
+    }
+  }
+
+  let box = (root.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number);
+  if (box.length !== 4 || box.some(n => !Number.isFinite(n)) || box[2] <= 0 || box[3] <= 0) {
+    box = [0, 0, parseFloat(root.getAttribute("width")) || 300, parseFloat(root.getAttribute("height")) || 300];
+  }
+  let attrs = "";
+  for (const k of ["fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "opacity", "fill-rule", "style"]) {
+    if (root.hasAttribute(k)) attrs += ` ${k}="${esc(root.getAttribute(k))}"`;
+  }
+  if (box[0] || box[1]) attrs += ` transform="translate(${-box[0]} ${-box[1]})"`;
+  let svg = innerMarkup(root);
+  if (attrs) svg = `<g${attrs}>${svg}</g>`;
+  const w = box[2], h = box[3];
+  return { slot: "custom", name: fileName.replace(/\.svg$/i, "").slice(0, 80), w, h, svg, x: 500, y: 500, scale: 300 / Math.max(w, h), rot: 0, flip: false };
+}
+
+function importText(text, fileName) {
+  const t = text.trimStart();
+  if (t.startsWith("{")) return loadCitizen(JSON.parse(t), `Loaded ${fileName}`);
+  const root = parseSvg(text);
+  const md = root.querySelector(`metadata[data-format="${FORMAT}"]`);
+  if (md) return loadCitizen(JSON.parse(md.textContent), `Loaded citizen from ${fileName}`);
+  const L = svgToLayer(text, fileName);
+  mutate(() => { S.layers.push(L); sel = S.layers.length - 1; });
+  toast(`Added ${fileName} as a new part — drag it into place`);
+}
+async function importFile(file) {
+  if (!file) return;
+  try {
+    if (file.size > 3e6) throw new Error("File is larger than 3 MB.");
+    importText(await file.text(), file.name);
+  } catch (e) {
+    toast("Could not load: " + (e.message || e));
+  }
+}
+
+/* ====================================================================
+   Editing
+   ==================================================================== */
+function snapshot() {
+  history.push(JSON.stringify({ S, sel }));
+  if (history.length > 150) history.shift();
+}
+function mutate(fn) { snapshot(); fn(); render(); }
+function undo() {
+  const last = history.pop();
+  if (!last) return;
+  ({ S, sel } = JSON.parse(last));
+  syncFields(); render();
+}
+function insertLayer(L) {
+  const rank = rankOf(L);
+  let at = 0;
+  S.layers.forEach((o, i) => { if (rankOf(o) <= rank) at = i + 1; });
+  S.layers.splice(at, 0, L);
+  return at;
+}
+function cycle(slot, i, dir) {
+  const names = BY_SLOT[slot];
+  mutate(() => {
+    if (i < 0) { sel = insertLayer(newLayer(dir > 0 ? names[0] : names.at(-1))); return; }
+    const L = S.layers[i];
+    const k = names.indexOf(L.part) + dir;
+    if (k < 0 || k >= names.length) { S.layers.splice(i, 1); sel = -1; return; }   // step through "none"
+    const from = placement(L.part), to = placement(names[k]);
+    const oldRank = rankOf(L);
+    // Keep whatever nudging the user did, relative to the part's home spot.
+    L.x += to.x - from.x; L.y += to.y - from.y; L.scale *= to.scale / from.scale; L.part = names[k];
+    if (rankOf(L) !== oldRank) { S.layers.splice(i, 1); sel = insertLayer(L); } else sel = i;
+  });
+}
+function removeLayer(i) { mutate(() => { S.layers.splice(i, 1); sel = -1; }); }
+function moveLayer(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= S.layers.length) return;
+  mutate(() => { [S.layers[i], S.layers[j]] = [S.layers[j], S.layers[i]]; sel = j; });
+}
+function randomCitizen() {
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  mutate(() => {
+    S.layers = []; sel = -1;
+    const chance = { body: .9, head: 1, hair: .55, eyes: 1, nose: .8, mouth: .9, deco: .6, extra: .15 };
+    for (const s of SLOTS) if (Math.random() < chance[s.id]) insertLayer(newLayer(pick(BY_SLOT[s.id])));
+    if (Math.random() < .25) insertLayer(newLayer(pick(BY_SLOT.deco)));
+  });
+}
+
+/* ====================================================================
+   Rendering the UI
+   ==================================================================== */
+function renderStage() {
+  const a = avatar({ interactive: true });
+  const st = $("stage");
+  st.setAttribute("viewBox", a.viewBox);
+  st.classList.toggle("cutout", S.frame === "none");
+  st.innerHTML = a.body;
+  $("main").className = "frame-" + S.frame;
+}
+const CHEVRON = dir => `<svg viewBox="0 0 30 50"><polyline points="${dir < 0 ? "24,4 8,25 24,46" : "6,4 22,25 6,46"}"/></svg>`;
+function thumb(L) {
+  const d = layerDef(L);
+  const fill = L.slot === "custom" ? "" : ` fill="${layerColors(L).dark}"`;
+  return `<svg viewBox="0 0 ${d.w} ${d.h}"${fill}>${paint(d.m, layerColors(L))}</svg>`;
+}
+function renderSlots() {
+  const rows = [];
+  const row = (slot, label, i) => {
+    const L = i >= 0 ? S.layers[i] : null;
+    const cyc = slot !== "custom";
+    rows.push(
+      `<div class="slot${i >= 0 && i === sel ? " selected" : ""}" data-slot="${slot}" data-i="${i}">` +
+        `<div class="slot-head"><span>${label}</span><span class="name">${L ? esc(layerName(L)) : ""}</span>` +
+          (cyc ? `<button data-act="add" title="Add another ${label.toLowerCase()}">+</button>` : "") +
+          (L ? `<button data-act="del" title="Remove">✕</button>` : "") + `</div>` +
+        `<div class="slot-pick">` +
+          (cyc ? `<button class="arrow" data-act="prev" aria-label="Previous ${label}">${CHEVRON(-1)}</button>` : "<span></span>") +
+          `<button class="thumb" data-act="select" title="${L ? "Select to adjust" : "Nothing here yet"}">${L ? thumb(L) : "none"}</button>` +
+          (cyc ? `<button class="arrow" data-act="next" aria-label="Next ${label}">${CHEVRON(1)}</button>` : "<span></span>") +
+        `</div></div>`);
+  };
+  for (const s of SLOTS) {
+    const idx = S.layers.map((L, i) => L.slot === s.id ? i : -1).filter(i => i >= 0);
+    if (!idx.length) row(s.id, s.label, -1);
+    idx.forEach(i => row(s.id, s.label, i));
+  }
+  S.layers.forEach((L, i) => { if (L.slot === "custom") row("custom", "Upload", i); });
+  const box = $("slots"), top = box.scrollTop;
+  box.innerHTML = rows.join("");
+  box.scrollTop = top;
+}
+function chipHtml(key, label, value, inherit) {
+  return `<label><button class="chip${value ? "" : " inherit"}" data-color="${key}" style="--c:${value || "transparent"}" title="${label}${inherit && !value ? " (follows the citizen colors)" : ""}"></button>${label}</label>`;
+}
+function renderColors() {
+  $("colors").innerHTML = COLOR_KEYS.map(k => chipHtml(k, k === "background" ? "Backgr." : k[0].toUpperCase() + k.slice(1), S.colors[k])).join("");
+  const match = Object.entries(PRESETS).find(([, p]) => COLOR_KEYS.every(k => p[k] === S.colors[k]));
+  $("preset").value = match ? match[0] : "";
+  $("frame").value = S.frame;
+}
+function renderAdjust() {
+  const L = S.layers[sel], box = $("adjust");
+  if (!L) {
+    box.innerHTML = `<p class="hint" style="text-align:left">Click a part — in the portrait or in the list — to move, resize, rotate, restack or recolor it.</p>`;
+    return;
+  }
+  const size = clamp(Math.round(50 * Math.log2(L.scale / baseScale(L))), -100, 100);
+  const custom = L.slot === "custom";
+  box.innerHTML =
+    `<h2>Adjust ${esc(layerName(L))}</h2>` +
+    `<div class="row"><span class="lbl">Size</span><input type="range" id="adj-size" min="-100" max="100" value="${size}"><output>${Math.round(L.scale / baseScale(L) * 100)}%</output></div>` +
+    `<div class="row"><span class="lbl">Rotate</span><input type="range" id="adj-rot" min="-180" max="180" value="${Math.round(L.rot)}"><output>${Math.round(L.rot)}°</output></div>` +
+    `<div class="row">` +
+      `<button class="btn small" data-adj="flip">Flip</button>` +
+      `<button class="btn small" data-adj="down"${sel === 0 ? " disabled" : ""}>Backward</button>` +
+      `<button class="btn small" data-adj="up"${sel === S.layers.length - 1 ? " disabled" : ""}>Forward</button>` +
+      `<button class="btn small" data-adj="reset">Reset</button>` +
+      `<button class="btn small" data-adj="del">Remove</button>` +
+    `</div>` +
+    (custom ? "" : `<div class="chips">` + ["main", "light", "dark"].map(k => chipHtml("layer." + k, k[0].toUpperCase() + k.slice(1), L.colors?.[k], true)).join("") + `</div>`);
+}
+function render() {
+  if (sel >= S.layers.length) sel = -1;
+  renderStage(); renderSlots(); renderColors(); renderAdjust();
+  $("undo").disabled = !history.length;
+}
+function syncFields() {
+  document.querySelectorAll("[data-f]").forEach(el => { el.value = S[el.dataset.f]; });
+}
+
+/* ====================================================================
+   Events
+   ==================================================================== */
+// ---- text fields
+document.querySelectorAll("[data-f]").forEach(el => el.addEventListener("input", () => { S[el.dataset.f] = el.value; }));
+
+// ---- part list
+$("slots").addEventListener("click", e => {
+  const btn = e.target.closest("[data-act]"), rowEl = e.target.closest(".slot");
+  if (!btn || !rowEl) return;
+  const slot = rowEl.dataset.slot, i = +rowEl.dataset.i;
+  switch (btn.dataset.act) {
+    case "prev": cycle(slot, i, -1); break;
+    case "next": cycle(slot, i, 1); break;
+    case "del": removeLayer(i); break;
+    case "add": {
+      const names = BY_SLOT[slot];
+      const current = i >= 0 ? names.indexOf(S.layers[i].part) : -1;
+      mutate(() => { sel = insertLayer(newLayer(names[(current + 1) % names.length])); });
+      break;
+    }
+    case "select": if (i >= 0) { sel = sel === i ? -1 : i; render(); } else cycle(slot, -1, 1); break;
+  }
+});
+
+// ---- adjust panel
+let sliding = false;
+$("adjust").addEventListener("input", e => {
+  const L = S.layers[sel];
+  if (!L || e.target.type !== "range") return;
+  if (!sliding) { snapshot(); sliding = true; }
+  if (e.target.id === "adj-size") {
+    L.scale = baseScale(L) * 2 ** (e.target.value / 50);
+    e.target.nextElementSibling.textContent = Math.round(L.scale / baseScale(L) * 100) + "%";
+  } else {
+    L.rot = +e.target.value;
+    e.target.nextElementSibling.textContent = L.rot + "°";
+  }
+  renderStage();
+});
+$("adjust").addEventListener("change", () => { sliding = false; $("undo").disabled = !history.length; });
+$("adjust").addEventListener("click", e => {
+  const act = e.target.closest("[data-adj]")?.dataset.adj, L = S.layers[sel];
+  if (!act || !L) return;
+  if (act === "flip") mutate(() => { L.flip = !L.flip; });
+  if (act === "up") moveLayer(sel, 1);
+  if (act === "down") moveLayer(sel, -1);
+  if (act === "del") removeLayer(sel);
+  if (act === "reset") mutate(() => {
+    const d = L.slot === "custom" ? { x: 500, y: 500, scale: baseScale(L) } : placement(L.part);
+    Object.assign(L, { x: d.x, y: d.y, scale: d.scale, rot: 0, flip: false });
+    delete L.colors;
+  });
+});
+
+// ---- colors
+function openPalette(anchor, current, allowInherit, onPick) {
+  const pop = $("pop");
+  pop.innerHTML =
+    `<div class="grid">` + PALETTE.map(([n, hex]) =>
+      `<button class="sw" data-hex="${hex}" title="${n ? n + " · " : ""}${hex}" style="background:${hex};color:${luminance(hex) > .4 ? "#001300" : "#ebedf0"}">${n}</button>`).join("") + `</div>` +
+    `<div class="extra"><input type="color" value="${current || "#75b44b"}"><span>any color</span>` +
+    (allowInherit ? `<button class="btn small" data-hex="" style="margin-left:auto">default</button>` : "") + `</div>`;
+  const r = anchor.getBoundingClientRect();
+  pop.classList.add("open");
+  pop.style.left = clamp(r.left, 8, innerWidth - 232) + "px";
+  pop.style.top = clamp(r.bottom + 8, 8, innerHeight - pop.offsetHeight - 8) + "px";
+  pop.onclick = e => {
+    const b = e.target.closest("[data-hex]");
+    if (b) { onPick(b.dataset.hex || null); closePalette(); }
+  };
+  pop.querySelector("input").onchange = e => { onPick(e.target.value); closePalette(); };
+}
+function closePalette() { $("pop").classList.remove("open"); }
+document.addEventListener("pointerdown", e => {
+  if (!e.target.closest("#pop") && !e.target.closest("[data-color]")) closePalette();
+});
+document.addEventListener("click", e => {
+  const chip = e.target.closest("[data-color]");
+  if (!chip) return;
+  const key = chip.dataset.color;
+  if (key.startsWith("layer.")) {
+    const k = key.slice(6), L = S.layers[sel];
+    if (!L) return;
+    openPalette(chip, L.colors?.[k] || S.colors[k], true, hex => mutate(() => {
+      L.colors = { ...(L.colors || {}) };
+      if (hex) L.colors[k] = hex; else delete L.colors[k];
+      if (!Object.keys(L.colors).length) delete L.colors;
+    }));
+  } else {
+    openPalette(chip, S.colors[key], false, hex => mutate(() => { S.colors[key] = hex; }));
+  }
+});
+$("preset").innerHTML = `<option value="">custom</option>` + Object.keys(PRESETS).map(n => `<option>${esc(n)}</option>`).join("");
+$("preset").addEventListener("change", e => { const p = PRESETS[e.target.value]; if (p) mutate(() => { S.colors = { ...p }; }); });
+$("frame").addEventListener("change", e => mutate(() => { S.frame = e.target.value; }));
+
+// ---- direct manipulation on the portrait
+const stage = $("stage");
+let drag = null;
+function stagePoint(e) {
+  const m = stage.getScreenCTM().inverse();
+  return { x: e.clientX * m.a + e.clientY * m.c + m.e, y: e.clientX * m.b + e.clientY * m.d + m.f };
+}
+stage.addEventListener("pointerdown", e => {
+  const g = e.target.closest("[data-i]");
+  if (!g) { if (sel !== -1) { sel = -1; render(); } return; }
+  sel = +g.dataset.i;
+  const L = S.layers[sel], p = stagePoint(e);
+  drag = { dx: L.x - p.x, dy: L.y - p.y, moved: false };
+  stage.setPointerCapture(e.pointerId);
+  stage.classList.add("dragging");
+  render();
+  e.preventDefault();
+});
+stage.addEventListener("pointermove", e => {
+  const L = S.layers[sel];
+  if (!drag || !L) return;
+  if (!drag.moved) { snapshot(); drag.moved = true; }
+  const p = stagePoint(e);
+  L.x = p.x + drag.dx; L.y = p.y + drag.dy;
+  renderStage();
+});
+const endDrag = () => { if (drag) { drag = null; stage.classList.remove("dragging"); $("undo").disabled = !history.length; } };
+stage.addEventListener("pointerup", endDrag);
+stage.addEventListener("pointercancel", endDrag);
+let wheelTimer;
+stage.addEventListener("wheel", e => {
+  const L = S.layers[sel];
+  if (!L) return;
+  e.preventDefault();
+  if (!wheelTimer) snapshot();
+  clearTimeout(wheelTimer);
+  wheelTimer = setTimeout(() => { wheelTimer = null; renderAdjust(); $("undo").disabled = false; }, 350);
+  if (e.shiftKey) L.rot = clamp(L.rot + Math.sign(e.deltaY || e.deltaX) * 3, -180, 180);
+  else L.scale = clamp(L.scale * (e.deltaY < 0 ? 1.04 : 1 / 1.04), .005, 200);
+  renderStage();
+}, { passive: false });
+
+document.addEventListener("keydown", e => {
+  if (e.target.closest("input, textarea, select, dialog")) return;
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); return; }
+  const L = S.layers[sel];
+  if (!L) return;
+  const step = e.shiftKey ? 10 : 1;
+  const move = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+  if (move) { e.preventDefault(); mutate(() => { L.x += move[0]; L.y += move[1]; }); }
+  else if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); removeLayer(sel); }
+  else if (e.key === "Escape") { sel = -1; render(); }
+  else if (e.key === "]") moveLayer(sel, 1);
+  else if (e.key === "[") moveLayer(sel, -1);
+});
+
+// ---- toolbar, upload, drag & drop
+$("random").addEventListener("click", randomCitizen);
+$("undo").addEventListener("click", undo);
+$("reset").addEventListener("click", () => { mutate(() => { S = starterCitizen(); sel = -1; }); syncFields(); });
+$("upload").addEventListener("click", () => $("file").click());
+$("file").addEventListener("change", e => { importFile(e.target.files[0]); e.target.value = ""; });
+let dragDepth = 0;
+addEventListener("dragenter", e => { if (e.dataTransfer?.types.includes("Files")) { dragDepth++; document.body.classList.add("dropping"); } });
+addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove("dropping"); } });
+addEventListener("dragover", e => e.preventDefault());
+addEventListener("drop", e => {
+  e.preventDefault(); dragDepth = 0; document.body.classList.remove("dropping");
+  importFile(e.dataTransfer.files[0]);
+});
+
+/* ====================================================================
+   Export
+   ==================================================================== */
+const b64 = {
+  enc(s) { let bin = ""; for (const b of new TextEncoder().encode(s)) bin += String.fromCharCode(b); return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); },
+  dec(s) { const bin = atob(s.replace(/-/g, "+").replace(/_/g, "/")); return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))); },
+};
+const svgUrl = svg => URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+function fileBase() {
+  return (S.name.trim().normalize("NFD").replace(/[^\w\- ]/g, "").trim().replace(/\s+/g, "_") || "citizen").slice(0, 40);
+}
+function download(blob, name) {
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: name });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+async function rasterize(svg, w, h) {
+  const url = svgUrl(svg);
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const cv = Object.assign(document.createElement("canvas"), { width: w, height: h });
+    cv.getContext("2d").drawImage(img, 0, 0, w, h);
+    return await new Promise((ok, fail) => cv.toBlob(b => b ? ok(b) : fail(new Error("PNG encoding failed")), "image/png"));
+  } finally { URL.revokeObjectURL(url); }
+}
+async function copy(text, what) {
+  try { await navigator.clipboard.writeText(text); toast(what + " copied"); }
+  catch { $("json").value = text; $("json").select(); toast("Clipboard blocked — text selected below, press Ctrl/Cmd+C"); }
+}
+let previewUrls = [];
+function openExport() {
+  previewUrls.forEach(URL.revokeObjectURL);
+  previewUrls = [svgUrl(avatarSvg()), svgUrl(cardSvg())];
+  $("prev-avatar").src = previewUrls[0];
+  $("prev-card").src = previewUrls[1];
+  $("json").value = JSON.stringify(serialize(), null, 2);
+  if (!$("dlg").open) $("dlg").showModal();
+}
+$("enter").addEventListener("click", openExport);
+$("about").addEventListener("click", () => $("lic").showModal());
+$("lic-close").addEventListener("click", () => $("lic").close());
+$("lic").addEventListener("click", e => { if (e.target === $("lic")) $("lic").close(); });
+$("dlg-close").addEventListener("click", () => $("dlg").close());
+$("dlg").addEventListener("click", async e => {
+  if (e.target === $("dlg")) return $("dlg").close();       // click on the backdrop
+  const x = e.target.closest("[data-x]")?.dataset.x;
+  if (!x) return;
+  const base = fileBase(), size = +$("png-size").value;
+  try {
+    if (x === "avatar-svg") download(new Blob([avatarSvg(size)], { type: "image/svg+xml" }), base + "_avatar.svg");
+    if (x === "avatar-png") download(await rasterize(avatarSvg(size), size, size), `${base}_avatar_${size}.png`);
+    if (x === "card-svg") download(new Blob([cardSvg(CARD.w)], { type: "image/svg+xml" }), base + "_pass.svg");
+    if (x === "card-png") { const w = Math.max(size, 1600); download(await rasterize(cardSvg(w), w, w * CARD.h / CARD.w), base + "_pass.png"); }
+    if (x === "json") download(new Blob([JSON.stringify(serialize(), null, 2) + "\n"], { type: "application/json" }), base + ".citizen.json");
+    if (x === "copy-json") copy(JSON.stringify(serialize(), null, 2), "JSON");
+    if (x === "copy-link") copy(location.href.split("#")[0] + "#c=" + b64.enc(JSON.stringify(serialize())), "Link");
+    if (x === "load-text") { loadCitizen(JSON.parse($("json").value), "Loaded from text"); openExport(); }
+  } catch (err) {
+    toast("That did not work: " + (err.message || err));
+  }
+});
+
+/* ====================================================================
+   Start
+   ==================================================================== */
+function fromHash() {
+  const m = location.hash.match(/^#c=([\w-]+)/);
+  if (!m) return;
+  try { S = normalize(JSON.parse(b64.dec(m[1]))).citizen; } catch (e) { toast("Link could not be read: " + e.message); }
+}
+fromHash();
+syncFields();
+render();
+addEventListener("hashchange", () => { if (/^#c=/.test(location.hash)) { snapshot(); fromHash(); sel = -1; syncFields(); render(); } });
+
+// Developer aid: open the file with #gallery to see every part at its home spot.
+if (location.hash === "#gallery") {
+  const n = Math.max(...Object.values(BY_SLOT).map(a => a.length));
+  let out = "";
+  for (let k = 0; k < n; k++) {
+    S = blankCitizen();
+    for (const s of SLOTS) if (s.id !== "extra") insertLayer(newLayer(BY_SLOT[s.id][k % BY_SLOT[s.id].length]));
+    const a = avatar({ clipId: "g" + k });
+    out += `<figure style="margin:0"><svg viewBox="${a.viewBox}" style="width:100%">${a.body}</svg>` +
+      `<figcaption style="font-size:11px">${S.layers.map(L => L.part).join(" ")}</figcaption></figure>`;
+  }
+  document.body.innerHTML = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:6px">${out}</div>`;
+}
+if (location.hash === "#export") openExport();
+</script>
+</body>
+</html>

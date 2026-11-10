@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+
+# Parts of the official 40C3 styleguide package the app does not use.
+# Get the full package from https://events.ccc.de/congress/2026/infos/styleguide/
+Styleguide.pdf
+pso-*/
+Webbanner_*
+fonts/*.ttf
+fonts/*.woff
+fonts/Hack-*Italic*
+fonts/jersey-10-latin-ext-*
