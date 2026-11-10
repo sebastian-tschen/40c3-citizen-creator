@@ -96,6 +96,8 @@ def serialize(el, rules, where):
     kids = "".join(serialize(c, rules, where) for c in el)
     if tag == "g" and not attrs:
         return kids  # plain grouping, nothing to keep
+    if not kids and attrs.get("fill") == "none" and "stroke" not in attrs:
+        return ""  # invisible leftovers from the Illustrator export
     a = "".join(f' {k}="{esc(v)}"' for k, v in attrs.items())
     return f"<{tag}{a}>{kids}</{tag}>" if kids else f"<{tag}{a}/>"
 

@@ -74,6 +74,8 @@ select {
 }
 .chip.inherit { background: repeating-linear-gradient(45deg, transparent 0 5px, var(--dim) 5px 7px); }
 .chips { display: flex; gap: 14px; flex-wrap: wrap; }
+.chips .btn.small { height: 34px; min-width: 44px; }
+.btn.small.on { background: var(--green); color: var(--bg); }
 .chips label { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; }
 
 /* ---------- stage ---------- */
@@ -360,6 +362,7 @@ for (const [name, p] of Object.entries(PARTS)) (BY_SLOT[p.c] ||= []).push(name);
 // The source parts are tightly cropped and carry no position, so this table
 // says where each one lands on the 1000x1000 canvas: centre x/y and either a
 // target width (w) or height (h).
+const OUTLINE = 6;   // outline thickness in canvas units
 const CANVAS = 1000, FRAME = { x: 110, y: 170, size: 780, stroke: 14 };
 const INNER = { x: FRAME.x + FRAME.stroke / 2, y: FRAME.y + FRAME.stroke / 2, size: FRAME.size - FRAME.stroke };
 const PLACE_SLOT = {
@@ -459,10 +462,21 @@ function layerSvg(L, i, selected) {
   const t = `translate(${r3(L.x)} ${r3(L.y)}) rotate(${r3(L.rot)}) scale(${r3(L.flip ? -L.scale : L.scale)} ${r3(L.scale)}) translate(${r3(-d.w / 2)} ${r3(-d.h / 2)})`;
   const fill = L.slot === "custom" ? "" : ` fill="${c.dark}"`;
   const idx = i == null ? "" : ` data-i="${i}"`;
+  // Optional outline: the same shapes once more underneath, all in one colour
+  // and fattened by a stroke, so only the rim around the silhouette shows.
+  const o = outlineColor(L);
+  const under = o
+    ? `<g fill="${o}" stroke="${o}" stroke-width="${r3(2 * OUTLINE / L.scale)}" stroke-linejoin="round">${paint(d.m, { main: o, light: o, dark: o })}</g>`
+    : "";
   const box = selected
     ? `<rect width="${d.w}" height="${d.h}" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="6 5" vector-effect="non-scaling-stroke" pointer-events="none" style="mix-blend-mode:difference"/>`
     : "";
-  return `<g${idx} transform="${t}"${fill}>${paint(d.m, c)}${box}</g>`;
+  return `<g${idx} transform="${t}"${fill}>${under}${paint(d.m, c)}${box}</g>`;
+}
+// A layer's outline is off, `true` (follows its main colour) or a fixed colour.
+function outlineColor(L) {
+  if (L.slot === "custom" || !L.outline) return null;
+  return L.outline === true ? layerColors(L).main : L.outline;
 }
 
 // frame: "box" | "full" | "none".  Returns { viewBox, body }.
@@ -555,6 +569,7 @@ function serialize() {
     Object.assign(o, { x: r3(L.x), y: r3(L.y), scale: Math.round(L.scale * 1e5) / 1e5, rot: r3(L.rot), flip: !!L.flip });
     if (L.colors && Object.keys(L.colors).length) o.colors = { ...L.colors };
     if (L.slot === "custom") o.svg = L.svg;
+    else if (L.outline) o.outline = L.outline;
     return o;
   });
   return out;
@@ -591,6 +606,7 @@ function normalize(o) {
       for (const k of ["main", "light", "dark"]) if (isColor(l.colors[k])) lc[k] = l.colors[k].toLowerCase();
       if (Object.keys(lc).length) L.colors = lc;
     }
+    if (L.slot !== "custom" && (l.outline === true || isColor(l.outline))) L.outline = l.outline === true ? true : l.outline.toLowerCase();
     c.layers.push(L);
   }
   return { citizen: c, skipped };
@@ -767,7 +783,11 @@ const CHEVRON = dir => `<svg viewBox="0 0 30 50"><polyline points="${dir < 0 ? "
 function thumb(L) {
   const d = layerDef(L);
   const fill = L.slot === "custom" ? "" : ` fill="${layerColors(L).dark}"`;
-  return `<svg viewBox="0 0 ${d.w} ${d.h}"${fill}>${paint(d.m, layerColors(L))}</svg>`;
+  const o = outlineColor(L), pad = o ? OUTLINE / L.scale : 0;
+  const under = o
+    ? `<g fill="${o}" stroke="${o}" stroke-width="${r3(2 * pad)}" stroke-linejoin="round">${paint(d.m, { main: o, light: o, dark: o })}</g>`
+    : "";
+  return `<svg viewBox="${r3(-pad)} ${r3(-pad)} ${r3(d.w + 2 * pad)} ${r3(d.h + 2 * pad)}"${fill}>${under}${paint(d.m, layerColors(L))}</svg>`;
 }
 function renderSlots() {
   const rows = [];
@@ -823,7 +843,9 @@ function renderAdjust() {
       `<button class="btn small" data-adj="reset">Reset</button>` +
       `<button class="btn small" data-adj="del">Remove</button>` +
     `</div>` +
-    (custom ? "" : `<div class="chips">` + ["main", "light", "dark"].map(k => chipHtml("layer." + k, k[0].toUpperCase() + k.slice(1), L.colors?.[k], true)).join("") + `</div>`);
+    (custom ? "" : `<div class="chips">` + ["main", "light", "dark"].map(k => chipHtml("layer." + k, k[0].toUpperCase() + k.slice(1), L.colors?.[k], true)).join("") +
+      `<label><button class="btn small${L.outline ? " on" : ""}" data-adj="outline" aria-pressed="${!!L.outline}" title="Draw a thin outline around this part, also in the exports">${L.outline ? "on" : "off"}</button>Outline</label>` +
+      (L.outline ? chipHtml("layer.outline", "Outl. color", outlineColor(L)) : "") + `</div>`);
 }
 function render() {
   if (sel >= S.layers.length) sel = -1;
@@ -879,13 +901,14 @@ $("adjust").addEventListener("click", e => {
   const act = e.target.closest("[data-adj]")?.dataset.adj, L = S.layers[sel];
   if (!act || !L) return;
   if (act === "flip") mutate(() => { L.flip = !L.flip; });
+  if (act === "outline") mutate(() => { if (L.outline) delete L.outline; else L.outline = true; });
   if (act === "up") moveLayer(sel, 1);
   if (act === "down") moveLayer(sel, -1);
   if (act === "del") removeLayer(sel);
   if (act === "reset") mutate(() => {
     const d = L.slot === "custom" ? { x: 500, y: 500, scale: baseScale(L) } : placement(L.part);
     Object.assign(L, { x: d.x, y: d.y, scale: d.scale, rot: 0, flip: false });
-    delete L.colors;
+    delete L.colors; delete L.outline;
   });
 });
 
@@ -918,6 +941,10 @@ document.addEventListener("click", e => {
   if (key.startsWith("layer.")) {
     const k = key.slice(6), L = S.layers[sel];
     if (!L) return;
+    if (k === "outline") {   // "default" = follow the part's main colour again
+      openPalette(chip, outlineColor(L), true, hex => mutate(() => { L.outline = hex || true; }));
+      return;
+    }
     openPalette(chip, L.colors?.[k] || S.colors[k], true, hex => mutate(() => {
       L.colors = { ...(L.colors || {}) };
       if (hex) L.colors[k] = hex; else delete L.colors[k];

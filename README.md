@@ -49,7 +49,9 @@ server and no network.
 ```
 
 Layers are drawn in order, first at the back. Only `part` is required per layer;
-position, scale, rotation and colours fall back to defaults. Part names are the
+position, scale, rotation and colours fall back to defaults. A layer can also carry
+`"colors": { "main": "#…", "light": "#…", "dark": "#…" }` to recolour just that part,
+and `"outline": true` (or a colour) to draw a thin outline around it. Part names are the
 file names in `Citizen_Creator_Assets/` and `Assets/Icons_Deco/` without `.svg`.
 
 ## Building
